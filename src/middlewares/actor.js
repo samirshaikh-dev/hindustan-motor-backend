@@ -36,6 +36,12 @@ const actorMiddleware = async (req, res, next) => {
   const actorId = req.headers[headerName];
 
   if (!actorId || typeof actorId !== 'string' || !actorId.trim()) {
+    // Allow public staff list (GET /api/v1/employees) to bypass actor verification
+    // Resolves the chicken-and-egg bootstrap issue when mobile app needs to load active staff for profile selection
+    if (req.method === 'GET' && (req.path === '/employees' || req.path === '/employees/')) {
+      return next();
+    }
+
     return next(new UnauthorizedError(`Missing actor identity (Header: ${config.ACTOR_HEADER} or Bearer token)`, 'ACTOR_HEADER_MISSING'));
   }
 
