@@ -37,6 +37,10 @@ const parseDuration = (duration) => {
   }
 };
 
+const hashToken = (token) => {
+  return crypto.createHash('sha256').update(token).digest('hex');
+};
+
 const sign = (payload, secret, options = {}) => {
   const header = {
     alg: 'HS256',
@@ -47,6 +51,8 @@ const sign = (payload, secret, options = {}) => {
   const expiresInSeconds = parseDuration(options.expiresIn || '7d');
 
   const fullPayload = {
+    iss: 'hindustan-motor-backend',
+    aud: 'hindustan-motor-client',
     ...payload,
     iat: now,
     exp: now + expiresInSeconds,
@@ -66,7 +72,7 @@ const sign = (payload, secret, options = {}) => {
   return `${encodedHeader}.${encodedPayload}.${signature}`;
 };
 
-const verify = (token, secret) => {
+const verify = (token, secret, options = {}) => {
   if (!token || typeof token !== 'string') {
     throw new Error('Token is required');
   }
@@ -101,10 +107,20 @@ const verify = (token, secret) => {
     throw new Error('Token has expired');
   }
 
+  if (options.issuer && payload.iss !== options.issuer) {
+    throw new Error('Invalid token issuer');
+  }
+
+  if (options.audience && payload.aud !== options.audience) {
+    throw new Error('Invalid token audience');
+  }
+
   return payload;
 };
 
 module.exports = {
   sign,
   verify,
+  hashToken,
+  parseDuration,
 };

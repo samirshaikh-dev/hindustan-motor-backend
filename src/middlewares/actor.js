@@ -14,7 +14,7 @@ const actorMiddleware = async (req, res, next) => {
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
-      const decoded = authService.verifyAdminToken(token);
+      const decoded = authService.verifyAccessToken(token);
       req.admin = {
         email: decoded.email,
         role: decoded.role,

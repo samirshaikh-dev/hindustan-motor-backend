@@ -153,16 +153,24 @@ Returns the available endpoints and authentication instructions for API v1. Bypa
 
 ---
 
-## 3. Admin Authentication Module (`/api/v1/auth`)
+## 3. Admin Authentication Module (`/api/v1/auth` and `/api/auth`)
 
-The system features a single dedicated workshop owner/admin account. Admin credentials are kept strictly in environment variables (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) with **zero database credential storage**. Upon authentication, a cryptographically signed JWT token is issued.
+The system features a single dedicated workshop owner/admin account with industry-standard **Access Token + Refresh Token** authentication.
+- **Admin Credentials**: Strictly kept in environment variables (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) with **zero database credential storage**.
+- **Access Tokens**: Short-lived (15 minutes) cryptographically signed JWTs passed via `Authorization: Bearer <token>`. Never stored in the database.
+- **Refresh Tokens**: Long-lived (7 days) tokens delivered via **`HttpOnly, Secure` cookies**. Never exposed in JSON responses or `localStorage`.
+- **Hashed Server-side Storage**: Refresh tokens are stored exclusively as SHA-256 hashes in the `AdminSession` table.
+- **Token Rotation & Reuse Detection**: Every refresh rotates the refresh token. If an invalidated or already-rotated token is reused, the entire session family is automatically revoked to prevent session hijacking.
+
+---
 
 ### 3.1 Admin Login
-Authenticates the workshop admin and returns a signed Bearer JWT token.
+Authenticates the workshop admin, issues a short-lived access token, and sets a secure HttpOnly refresh token cookie.
 
 - **Method**: `POST`
-- **URL**: `/api/v1/auth/login`
+- **URL**: `/api/v1/auth/login` (or `/api/auth/login`)
 - **Headers**: None required
+- **Cookies Set**: `refreshToken=<token>; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax; [Secure]`
 
 #### Request Payload
 ```json
@@ -179,8 +187,9 @@ Authenticates the workshop admin and returns a signed Bearer JWT token.
   "message": "Admin login successful",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
-    "expiresIn": "7d",
+    "expiresIn": "15m",
     "admin": {
       "email": "admin@example.com",
       "role": "OWNER"
@@ -211,12 +220,90 @@ Authenticates the workshop admin and returns a signed Bearer JWT token.
 
 ---
 
-### 3.2 Get Current Admin Profile
-Retrieves authenticated admin profile using the Bearer token.
+### 3.2 Refresh Access Token
+Rotates the refresh token, revokes the old session, and issues a new access token and rotated refresh token cookie.
+
+- **Method**: `POST`
+- **URL**: `/api/v1/auth/refresh` (or `/api/auth/refresh`)
+- **Headers**: None required (cookie read automatically)
+- **Cookies Expected**: `refreshToken=<token>`
+- **Cookies Set**: New rotated `refreshToken=<new_token>; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax; [Secure]`
+
+#### Request Payload
+None required (token is read from `refreshToken` cookie). Optionally accepts `{"refreshToken": "..."}` for non-browser API clients.
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Access token refreshed successfully",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tokenType": "Bearer",
+    "expiresIn": "15m"
+  }
+}
+```
+
+#### Error Responses
+- **Missing Refresh Token (`401 Unauthorized`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Refresh token required",
+    "code": "REFRESH_TOKEN_REQUIRED",
+    "data": null
+  }
+  ```
+- **Reuse Detected / Session Compromise (`401 Unauthorized`)**:
+  *(Automatically revokes all sessions associated with that token family and clears the cookie)*
+  ```json
+  {
+    "success": false,
+    "message": "Refresh token reuse detected. Session invalidated.",
+    "code": "TOKEN_REUSE_DETECTED",
+    "data": null
+  }
+  ```
+- **Expired Refresh Token (`401 Unauthorized`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Refresh token has expired",
+    "code": "REFRESH_TOKEN_EXPIRED",
+    "data": null
+  }
+  ```
+
+---
+
+### 3.3 Admin Logout
+Revokes the server-side refresh session and clears the `refreshToken` cookie.
+
+- **Method**: `POST`
+- **URL**: `/api/v1/auth/logout` (or `/api/auth/logout`)
+- **Headers**: None required
+- **Cookies Expected**: `refreshToken=<token>`
+- **Cookies Cleared**: `refreshToken=; Path=/; Max-Age=0`
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Logged out successfully",
+  "data": null
+}
+```
+
+---
+
+### 3.4 Get Current Admin Profile
+Retrieves authenticated admin profile using the Bearer access token.
 
 - **Method**: `GET`
 - **URL**: `/api/v1/auth/me`
-- **Headers**: `Authorization: Bearer <token>`
+- **Headers**: `Authorization: Bearer <access_token>`
 
 #### Success Response (`200 OK`)
 ```json
@@ -229,6 +316,27 @@ Retrieves authenticated admin profile using the Bearer token.
   }
 }
 ```
+
+#### Error Responses
+- **Missing Token (`401 Unauthorized`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Admin authorization token required",
+    "code": "TOKEN_REQUIRED",
+    "data": null
+  }
+  ```
+- **Invalid / Expired Token (`401 Unauthorized`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Invalid or expired access token",
+    "code": "INVALID_TOKEN",
+    "data": null
+  }
+  ```
+
 
 ---
 

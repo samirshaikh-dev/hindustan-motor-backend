@@ -11,6 +11,7 @@ const actorMiddleware = require('./middlewares/actor');
 const apiLimiter = require('./middlewares/rateLimiter');
 const errorHandler = require('./core/middlewares/errorHandler');
 const notFoundHandler = require('./core/middlewares/notFoundHandler');
+const cookieParser = require('./core/middlewares/cookieParser');
 const { sendSuccess } = require('./core/response');
 
 // Module Routers
@@ -31,6 +32,7 @@ const createApp = () => {
   app.use(cors({ origin: config.CORS_ORIGIN }));
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser);
 
   // General rate limiting
   app.use(apiLimiter);
@@ -113,8 +115,9 @@ const createApp = () => {
     });
   });
 
-  // Authentication routes (public login, protected /me)
+  // Authentication routes (public login, refresh, logout, protected /me)
   app.use('/api/v1/auth', authRoutes);
+  app.use('/api/auth', authRoutes);
 
   // Protect all remaining /api/v1 routes with actor/auth middleware
   app.use('/api/v1', actorMiddleware);

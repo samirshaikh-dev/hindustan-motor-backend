@@ -151,3 +151,22 @@ model History {
   @@index([actorEmployeeId])
   @@index([createdAt])
 }
+
+model AdminSession {
+  id                String    @id @default(cuid())
+  adminEmail        String
+  tokenHash         String    @unique
+  family            String
+  isRevoked         Boolean   @default(false)
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([tokenHash])
+  @@index([adminEmail])
+  @@index([family])
+}
