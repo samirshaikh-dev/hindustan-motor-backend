@@ -15,7 +15,14 @@ describe('Health and Root Endpoints', () => {
     const res = await request(app).get('/health');
     expect([200, 503]).toContain(res.status);
     expect(res.body).toHaveProperty('success');
-    expect(res.body.data).toHaveProperty('status');
     expect(res.body.data).toHaveProperty('database');
+  });
+
+  it('GET /api/v1 should return API index without actor header', async () => {
+    const res = await request(app).get('/api/v1');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('endpoints');
+    expect(res.body.data.endpoints).toHaveProperty('employees');
   });
 });

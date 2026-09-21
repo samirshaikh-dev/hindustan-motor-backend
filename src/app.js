@@ -70,6 +70,27 @@ const createApp = () => {
     });
   });
 
+  // API v1 Overview & Endpoint Index
+  app.get('/api/v1', (req, res) => {
+    return sendSuccess(res, 'Hindustan Electricals Winding Works API v1', {
+      version: '1.0.0',
+      endpoints: {
+        employees: '/api/v1/employees',
+        employeeStatus: '/api/v1/employees/status',
+        motors: '/api/v1/motors',
+        jobs: '/api/v1/jobs',
+        tasks: '/api/v1/tasks',
+        history: '/api/v1/history',
+        health: '/health',
+      },
+      authentication: {
+        type: 'Header',
+        header: config.ACTOR_HEADER,
+        description: 'Provide an active employee ID in the X-Employee-Id header for all protected API requests',
+      },
+    });
+  });
+
   // Protect all /api/v1 routes with actor middleware
   app.use('/api/v1', actorMiddleware);
 
