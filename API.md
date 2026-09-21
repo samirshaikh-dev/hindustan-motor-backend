@@ -92,7 +92,147 @@ Returns service information. Bypasses actor header check.
 
 ---
 
-## 3. Employees Module (`/api/v1/employees`)
+### 2.3 Application Version Check
+Returns application name, semantic version, environment, and Node runtime version. Bypasses actor header check.
+
+- **Method**: `GET`
+- **URL**: `/version` or `/api/v1/version`
+- **Headers**: None required
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Application version",
+  "data": {
+    "name": "hindustan-motor-backend",
+    "version": "1.0.0",
+    "environment": "development",
+    "nodeVersion": "v20.x.x",
+    "startTime": "2026-09-21T10:00:00.000Z",
+    "uptime": 625,
+    "timestamp": "2026-09-21T10:10:25.000Z"
+  }
+}
+```
+
+---
+
+### 2.4 API v1 Overview Index
+Returns the available endpoints and authentication instructions for API v1. Bypasses actor header check.
+
+- **Method**: `GET`
+- **URL**: `/api/v1`
+- **Headers**: None required
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Hindustan Electricals Winding Works API v1",
+  "data": {
+    "version": "1.0.0",
+    "endpoints": {
+      "employees": "/api/v1/employees",
+      "employeeStatus": "/api/v1/employees/status",
+      "motors": "/api/v1/motors",
+      "jobs": "/api/v1/jobs",
+      "tasks": "/api/v1/tasks",
+      "history": "/api/v1/history",
+      "health": "/health",
+      "version": "/version"
+    },
+    "authentication": {
+      "type": "Header",
+      "header": "X-Employee-Id",
+      "description": "Provide an active employee ID in the X-Employee-Id header for all protected API requests"
+    }
+  }
+}
+```
+
+---
+
+## 3. Admin Authentication Module (`/api/v1/auth`)
+
+The system features a single dedicated workshop owner/admin account. Admin credentials are kept strictly in environment variables (`ADMIN_EMAIL`, `ADMIN_PASSWORD`) with **zero database credential storage**. Upon authentication, a cryptographically signed JWT token is issued.
+
+### 3.1 Admin Login
+Authenticates the workshop admin and returns a signed Bearer JWT token.
+
+- **Method**: `POST`
+- **URL**: `/api/v1/auth/login`
+- **Headers**: None required
+
+#### Request Payload
+```json
+{
+  "email": "admin@example.com",
+  "password": "your-secure-password"
+}
+```
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Admin login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "tokenType": "Bearer",
+    "expiresIn": "7d",
+    "admin": {
+      "email": "admin@example.com",
+      "role": "OWNER"
+    }
+  }
+}
+```
+
+#### Error Responses
+- **Invalid Credentials (`401 Unauthorized`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Invalid email or password",
+    "code": "INVALID_CREDENTIALS",
+    "data": null
+  }
+  ```
+- **Validation Error (`400 Bad Request`)**:
+  ```json
+  {
+    "success": false,
+    "message": "Validation failed",
+    "code": "VALIDATION_ERROR",
+    "data": [{ "field": "body.email", "message": "Invalid email address" }]
+  }
+  ```
+
+---
+
+### 3.2 Get Current Admin Profile
+Retrieves authenticated admin profile using the Bearer token.
+
+- **Method**: `GET`
+- **URL**: `/api/v1/auth/me`
+- **Headers**: `Authorization: Bearer <token>`
+
+#### Success Response (`200 OK`)
+```json
+{
+  "success": true,
+  "message": "Admin profile retrieved",
+  "data": {
+    "email": "admin@example.com",
+    "role": "OWNER"
+  }
+}
+```
+
+---
+
+## 4. Employees Module (`/api/v1/employees`)
 
 ### 3.1 Register an Employee
 Creates a new workshop employee or owner.

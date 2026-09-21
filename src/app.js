@@ -4,6 +4,7 @@ const cors = require('cors');
 const config = require('./config/env');
 const prisma = require('./config/prisma');
 const logger = require('./config/logger');
+const pkg = require('../package.json');
 
 // Core Middlewares
 const actorMiddleware = require('./middlewares/actor');
@@ -18,6 +19,9 @@ const motorRoutes = require('./modules/motors/motor.routes');
 const jobRoutes = require('./modules/jobs/job.routes');
 const taskRoutes = require('./modules/tasks/task.routes');
 const historyRoutes = require('./modules/history/history.routes');
+const authRoutes = require('./modules/auth/auth.routes');
+
+const serverStartTime = new Date().toISOString();
 
 const createApp = () => {
   const app = express();
@@ -67,13 +71,27 @@ const createApp = () => {
     return sendSuccess(res, 'Hindustan Electricals Winding Works API is running', {
       docs: '/api/v1',
       health: '/health',
+      version: '/version',
+    });
+  });
+
+  // Version info endpoint (bypasses actor middleware)
+  app.get(['/version', '/api/v1/version'], (req, res) => {
+    return sendSuccess(res, 'Application version', {
+      name: pkg.name,
+      version: pkg.version,
+      environment: config.NODE_ENV,
+      nodeVersion: process.version,
+      startTime: serverStartTime,
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
     });
   });
 
   // API v1 Overview & Endpoint Index
   app.get('/api/v1', (req, res) => {
     return sendSuccess(res, 'Hindustan Electricals Winding Works API v1', {
-      version: '1.0.0',
+      version: pkg.version,
       endpoints: {
         employees: '/api/v1/employees',
         employeeStatus: '/api/v1/employees/status',
@@ -82,16 +100,23 @@ const createApp = () => {
         tasks: '/api/v1/tasks',
         history: '/api/v1/history',
         health: '/health',
+        version: '/version',
+        auth: {
+          login: '/api/v1/auth/login',
+          me: '/api/v1/auth/me',
+        },
       },
       authentication: {
-        type: 'Header',
-        header: config.ACTOR_HEADER,
-        description: 'Provide an active employee ID in the X-Employee-Id header for all protected API requests',
+        admin: 'Bearer <token> (obtain from /api/v1/auth/login)',
+        employee: `Header: ${config.ACTOR_HEADER} (active employee ID)`,
       },
     });
   });
 
-  // Protect all /api/v1 routes with actor middleware
+  // Authentication routes (public login, protected /me)
+  app.use('/api/v1/auth', authRoutes);
+
+  // Protect all remaining /api/v1 routes with actor/auth middleware
   app.use('/api/v1', actorMiddleware);
 
   // API Routes
