@@ -1,0 +1,40 @@
+# Runtime
+node>=20
+
+# Backend framework
+express
+
+# Database
+prisma
+@prisma/client
+@neondatabase/serverless
+
+# Validation
+zod
+
+# Authentication & security
+jsonwebtoken
+argon2
+helmet
+cors
+express-rate-limit
+
+# Cloudinary
+cloudinary
+
+# Logging
+winston
+
+# Environment variables
+dotenv
+
+# Development
+nodemon
+
+# Testing
+vitest
+supertest
+
+# Code quality
+eslint
+prettier

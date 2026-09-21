@@ -1,0 +1,21 @@
+{
+  "name": "hindustan-motor-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samirshaikh-dev/hindustan-motor-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/samirshaikh-dev/hindustan-motor-backend/issues"
+  },
+  "homepage": "https://github.com/samirshaikh-dev/hindustan-motor-backend#readme"
+}

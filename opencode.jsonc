@@ -1,0 +1,59 @@
+// Hindustan Electricals — opencode project configuration.
+// JSONC: comments and trailing commas are allowed.
+// Full reference: https://opencode.ai/config.json
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Pin models explicitly (uncomment to override the global default).
+  // "model": "anthropic/claude-sonnet-4-6",
+  // "small_model": "groq/llama-3.3-70b-versatile",
+
+  // Always inject project context and rules so the mandatory pre-implementation
+  // protocol (load agents/skills before any code change) is in effect.
+  "instructions": ["context.md", "AI_RULE.md"],
+
+  // Register the 5 specialized engineering skills (ui-ux, frontend, seo,
+  // keyword-research, performance) as native opencode skills. Each lives in
+  // agents/skills/<name>/SKILL.md and is scanned recursively.
+  "skills": {
+    "paths": ["agents/skills"]
+  },
+
+  // Custom agents stay out of the way of tooling; define any here if needed.
+  // "agent": {},
+
+  // No `command` entries are defined yet: this is a static HTML/CSS/JS site
+  // with no package.json / build tooling, so there is nothing to lint or build.
+  // Add commands here if/when pnpm scripts are introduced.
+
+  // Fail-open, AI-friendly permission defaults: keep secrets safe, allow git.
+  // "pnpm *" is whitelisted in case tooling is added later.
+  "permission": {
+    "bash": {
+      "pnpm *": "allow",
+      "git status*": "allow",
+      "git log*": "allow",
+      "git diff*": "allow",
+      "ls*": "allow",
+      "dir*": "allow",
+      "Get-*": "allow",
+      "Select-*": "allow",
+      "Test-Path*": "allow",
+      "Split-Path*": "allow",
+      "Join-Path*": "allow",
+      "Resolve-Path*": "allow",
+      "*ForEach-Object*": "allow",
+      "*Where-Object*": "allow",
+      "*Measure-Object*": "allow",
+      "*Group-Object*": "allow",
+      "*Compare-Object*": "allow",
+      "*Sort-Object*": "allow",
+      "*Out-String*": "allow",
+      "*regex*": "allow",
+      "*": "ask"
+    },
+    "external_directory": {
+      "*": "ask"
+    }
+  }
+}

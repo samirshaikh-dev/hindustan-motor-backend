@@ -1,0 +1,487 @@
+# Motor Workshop Task Management App — PRD
+
+## 1. Product Overview
+
+**Product:** Hindustan Electricals Winding Works — Motor Workshop Management App
+
+The application will help the workshop owner and employees manage motors received for repair/rewinding, assign work to employees, track job/task status, and maintain a complete history of work performed on each motor.
+
+The first release will focus only on the core workflow:
+
+**Motor → Job → Task → Employee → Status → History**
+
+The backend will be built first as a **modular monolith** using Node.js and will expose a REST API for a future React Native Expo mobile application.
+
+---
+
+## 2. Goals
+
+### Primary Goals
+
+- Register every motor received by the workshop.
+- Maintain customer and motor information.
+- Create and manage a job for each motor.
+- Create tasks for a job.
+- Assign tasks to employees.
+- Track task and job status.
+- Maintain an immutable activity/history timeline.
+- Allow the mobile app to consume the backend through REST APIs.
+- Store motor/job images using Cloudinary.
+- Store application data in Neon PostgreSQL.
+
+### Non-Goals for MVP
+
+The first version will NOT include:
+
+- Billing/invoices
+- Payments
+- Inventory management
+- Accounting
+- Customer-facing portal
+- WhatsApp/SMS notifications
+- Push notifications
+- Advanced analytics/reports
+- Web application
+- Multiple workshops/branches
+- Complex workflow automation
+
+These can be added later without changing the core architecture significantly.
+
+---
+
+## 3. Users and Roles
+
+### Owner/Admin
+
+Can:
+
+- Login
+- View dashboard information
+- Create motors
+- View all motors/jobs
+- Create and update jobs
+- Create tasks
+- Assign tasks to employees
+- View employees
+- View complete motor/job history
+- Update job/task status
+- Upload/view motor images
+
+### Employee
+
+Can:
+
+- Login
+- View assigned tasks
+- View related motor/job information
+- Start assigned tasks
+- Update task status
+- Complete assigned tasks
+- View relevant task history
+
+Employees should not be able to access administrative operations unless explicitly authorized.
+
+---
+
+## 4. Core Domain Model
+
+### Motor
+
+Represents the physical motor received by the workshop.
+
+Suggested fields:
+
+- id
+- motorNumber
+- customerName
+- customerPhone
+- brand
+- motorType
+- power
+- powerUnit
+- rpm
+- phase
+- serialNumber
+- complaint
+- notes
+- receivedAt
+- expectedDeliveryAt
+- images
+- createdAt
+- updatedAt
+
+### Job
+
+Represents the workshop work order associated with a motor.
+
+A motor will normally have one active job in the MVP.
+
+Suggested fields:
+
+- id
+- jobNumber
+- motorId
+- status
+- notes
+- createdAt
+- updatedAt
+
+### Task
+
+Represents an individual piece of work within a job.
+
+Examples:
+
+- Inspection
+- Dismantling
+- Winding
+- Varnishing
+- Assembly
+- Testing
+
+Suggested fields:
+
+- id
+- jobId
+- title
+- description
+- assignedEmployeeId
+- status
+- startedAt
+- completedAt
+- createdAt
+- updatedAt
+
+### Employee
+
+Represents a workshop worker.
+
+Suggested fields:
+
+- id
+- name
+- phone
+- role
+- isActive
+- createdAt
+- updatedAt
+
+Authentication-related fields should be separated appropriately if employees use login credentials.
+
+### History
+
+Represents an activity/event performed against a motor, job, or task.
+
+Examples:
+
+- Motor registered
+- Job created
+- Task created
+- Task assigned
+- Task started
+- Task completed
+- Job status changed
+- Motor image uploaded
+
+Suggested fields:
+
+- id
+- motorId
+- jobId
+- taskId
+- actorUserId
+- action
+- description
+- metadata
+- createdAt
+
+History should be append-only from the application perspective.
+
+---
+
+## 5. Statuses
+
+### Job Status
+
+Recommended initial statuses:
+
+1. `RECEIVED`
+2. `IN_PROGRESS`
+3. `TESTING`
+4. `READY_FOR_DELIVERY`
+5. `DELIVERED`
+6. `CANCELLED`
+
+### Task Status
+
+Recommended initial statuses:
+
+1. `PENDING`
+2. `ASSIGNED`
+3. `IN_PROGRESS`
+4. `COMPLETED`
+5. `CANCELLED`
+
+The backend should validate status transitions rather than allowing arbitrary values from the client.
+
+---
+
+## 6. Core Workflow
+
+### Motor Registration
+
+1. Owner creates a motor.
+2. Backend validates the request.
+3. Backend generates a unique motor number.
+4. Backend creates the motor.
+5. Backend creates the related job.
+6. Backend records a history event.
+
+### Task Assignment
+
+1. Owner opens a job.
+2. Owner creates a task.
+3. Owner selects an employee.
+4. Backend validates that the employee is active.
+5. Task is created/assigned.
+6. History event is recorded.
+
+### Employee Work
+
+1. Employee views assigned tasks.
+2. Employee starts a task.
+3. Backend updates task status to `IN_PROGRESS`.
+4. History event is recorded.
+5. Employee completes the task.
+6. Backend updates task status to `COMPLETED`.
+7. Completion timestamp is stored.
+8. History event is recorded.
+
+### Job Progress
+
+Job status can be updated by authorized users according to the defined workflow.
+
+Every important status change must create a history record.
+
+---
+
+## 7. API Requirements
+
+The backend will expose REST APIs under `/api/v1`.
+
+### Authentication
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+### Motors
+
+- `POST /api/v1/motors`
+- `GET /api/v1/motors`
+- `GET /api/v1/motors/:id`
+- `PATCH /api/v1/motors/:id`
+- `POST /api/v1/motors/:id/images`
+
+### Jobs
+
+- `POST /api/v1/jobs`
+- `GET /api/v1/jobs`
+- `GET /api/v1/jobs/:id`
+- `PATCH /api/v1/jobs/:id`
+- `GET /api/v1/jobs/:id/history`
+
+### Tasks
+
+- `POST /api/v1/jobs/:jobId/tasks`
+- `GET /api/v1/jobs/:jobId/tasks`
+- `GET /api/v1/tasks/:id`
+- `PATCH /api/v1/tasks/:id`
+- `PATCH /api/v1/tasks/:id/status`
+
+### Employees
+
+- `POST /api/v1/employees`
+- `GET /api/v1/employees`
+- `GET /api/v1/employees/:id`
+- `PATCH /api/v1/employees/:id`
+- `GET /api/v1/employees/:id/tasks`
+
+### History
+
+- `GET /api/v1/motors/:motorId/history`
+- `GET /api/v1/jobs/:jobId/history`
+
+Exact API contracts should be documented separately as the implementation progresses.
+
+---
+
+## 8. Validation Requirements
+
+The backend must validate:
+
+- Required fields
+- Phone number format
+- Valid IDs
+- Active employee assignment
+- Valid enum/status values
+- Status transitions
+- Duplicate motor/job numbers
+- File/image metadata where applicable
+
+Client-side validation must not replace backend validation.
+
+---
+
+## 9. Image Requirements
+
+Images will be stored in **Cloudinary**.
+
+The database should store Cloudinary metadata such as:
+
+- publicId
+- secureUrl
+- resourceType
+- width
+- height
+- createdAt
+
+The backend should control upload authorization and should not store image binary data in PostgreSQL.
+
+---
+
+## 10. Security Requirements
+
+- Authentication required for protected APIs.
+- Role-based authorization for owner/admin and employee operations.
+- Passwords must never be stored as plain text.
+- Secrets must be stored in environment variables.
+- Request validation must happen on the server.
+- Consistent error responses must be returned.
+- Sensitive fields must not be exposed unnecessarily.
+- CORS must be configured for the mobile client/environment.
+- Rate limiting should be considered for authentication endpoints.
+
+---
+
+## 11. Error Response Format
+
+Use a consistent structure:
+
+```json
+{
+  "success": false,
+  "message": "Task not found",
+  "code": "TASK_NOT_FOUND",
+  "data": null
+}
+```
+
+Successful responses:
+
+```json
+{
+  "success": true,
+  "message": "Task updated successfully",
+  "data": {}
+}
+```
+
+Validation errors may include field-level details.
+
+---
+
+## 12. Architecture
+
+The backend will use a **Modular Monolith** architecture.
+
+Each business domain owns its:
+
+- Routes
+- Controllers
+- Services
+- Validation
+- Database/repository logic
+- Domain-specific types
+
+Example modules:
+
+- Auth
+- Users
+- Employees
+- Motors
+- Jobs
+- Tasks
+- History
+- Media
+
+Modules live inside one deployable Node.js application.
+
+---
+
+## 13. Non-Functional Requirements
+
+### Maintainability
+
+- Clean, modular JavaScript (Node.js) throughout the backend.
+- Clear module boundaries.
+- Business logic should live in services, not controllers.
+- Database access should not be scattered throughout the application.
+
+### Reliability
+
+- Use database transactions for operations that modify multiple related records.
+- History creation should happen atomically with important business operations where appropriate.
+
+### Scalability
+
+The initial application will be a monolith, but modules should remain sufficiently decoupled so individual domains can be changed later.
+
+### Observability
+
+- Structured application logging.
+- Request/error logging.
+- Health check endpoint.
+
+Suggested:
+
+`GET /health`
+
+---
+
+## 14. MVP Acceptance Criteria
+
+The MVP is considered functional when:
+
+- An owner can log in.
+- An employee can log in.
+- A new motor can be registered.
+- A job can be created for a motor.
+- Tasks can be created for a job.
+- Tasks can be assigned to employees.
+- Employees can see their assigned tasks.
+- Employees can start and complete tasks.
+- Job status can be updated by authorized users.
+- Motor/job history is automatically recorded.
+- Motor images can be uploaded to Cloudinary.
+- Data persists correctly in Neon PostgreSQL.
+- REST APIs are usable by the future React Native Expo application.
+
+---
+
+## 15. Future Extensions
+
+Possible later modules:
+
+- Customers
+- Billing/invoices
+- Payments
+- Inventory/spare parts
+- Estimates
+- Delivery tracking
+- Push notifications
+- WhatsApp integration
+- Reports
+- Search improvements
+- Audit logs
+- Multi-branch support
