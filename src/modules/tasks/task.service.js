@@ -76,14 +76,14 @@ class TaskService {
     return task;
   }
 
-  async getTasksByJobId(jobId) {
+  async getTasksByJobId(jobId, query = {}) {
     const job = await prisma.job.findUnique({
       where: { id: jobId },
     });
     if (!job) {
       throw new NotFoundError('Job not found', 'JOB_NOT_FOUND');
     }
-    return taskRepo.findByJobId(jobId);
+    return taskRepo.findByJobId(jobId, query);
   }
 
   async updateTask(id, data, actorEmployee) {
@@ -182,6 +182,13 @@ class TaskService {
     });
 
     return updatedTask;
+  }
+
+  async deleteTask(id, actorEmployee) {
+    return taskRepo.deleteTask({
+      taskId: id,
+      actorEmployeeId: actorEmployee.id,
+    });
   }
 }
 

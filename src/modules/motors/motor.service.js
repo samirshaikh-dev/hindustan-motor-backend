@@ -54,6 +54,13 @@ class MotorService {
 
     return updated;
   }
+
+  async deleteMotor(id, actorEmployee) {
+    return motorRepo.deleteMotorWithCascade({
+      motorId: id,
+      actorEmployeeId: actorEmployee.id,
+    });
+  }
 }
 
 module.exports = new MotorService();

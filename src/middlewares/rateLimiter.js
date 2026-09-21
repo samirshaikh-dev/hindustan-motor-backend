@@ -8,7 +8,7 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many requests from this IP, please try again later.',
+    message: 'Too many requests, please try again later.',
     code: 'RATE_LIMIT_EXCEEDED',
     data: null,
   },

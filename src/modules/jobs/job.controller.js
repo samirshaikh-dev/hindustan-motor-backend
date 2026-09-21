@@ -28,10 +28,16 @@ const updateJobStatus = asyncHandler(async (req, res) => {
   return sendSuccess(res, `Job status updated to ${status} successfully`, job);
 });
 
+const deleteJob = asyncHandler(async (req, res) => {
+  const job = await jobService.deleteJob(req.params.id, req.actor);
+  return sendSuccess(res, 'Job deleted successfully', job);
+});
+
 module.exports = {
   createJob,
   getAllJobs,
   getJobById,
   updateJob,
   updateJobStatus,
+  deleteJob,
 };

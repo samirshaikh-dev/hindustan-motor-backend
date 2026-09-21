@@ -8,8 +8,8 @@ const createTask = asyncHandler(async (req, res) => {
 });
 
 const getTasksByJobId = asyncHandler(async (req, res) => {
-  const tasks = await taskService.getTasksByJobId(req.params.jobId);
-  return sendSuccess(res, 'Tasks retrieved successfully', tasks);
+  const result = await taskService.getTasksByJobId(req.params.jobId, req.query);
+  return sendSuccess(res, 'Tasks retrieved successfully', result);
 });
 
 const getTaskById = asyncHandler(async (req, res) => {
@@ -28,10 +28,16 @@ const updateTaskStatus = asyncHandler(async (req, res) => {
   return sendSuccess(res, `Task status updated to ${status} successfully`, task);
 });
 
+const deleteTask = asyncHandler(async (req, res) => {
+  const task = await taskService.deleteTask(req.params.id, req.actor);
+  return sendSuccess(res, 'Task deleted successfully', task);
+});
+
 module.exports = {
   createTask,
   getTasksByJobId,
   getTaskById,
   updateTask,
   updateTaskStatus,
+  deleteTask,
 };

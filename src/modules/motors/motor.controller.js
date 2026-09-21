@@ -22,9 +22,15 @@ const updateMotor = asyncHandler(async (req, res) => {
   return sendSuccess(res, 'Motor updated successfully', motor);
 });
 
+const deleteMotor = asyncHandler(async (req, res) => {
+  const motor = await motorService.deleteMotor(req.params.id, req.actor);
+  return sendSuccess(res, 'Motor deleted successfully', motor);
+});
+
 module.exports = {
   registerMotor,
   getAllMotors,
   getMotorById,
   updateMotor,
+  deleteMotor,
 };

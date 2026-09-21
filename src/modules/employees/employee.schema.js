@@ -35,6 +35,20 @@ const listEmployeesQuerySchema = z.object({
       .optional()
       .transform((val) => (val === undefined ? undefined : val === 'true')),
     role: z.enum(['OWNER', 'EMPLOYEE']).optional(),
+    search: z.string().trim().optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
+  }),
+});
+
+const employeeTasksQuerySchema = z.object({
+  params: z.object({
+    id: z.string().min(1, 'Employee ID is required'),
+  }),
+  query: z.object({
+    status: z.enum(['PENDING', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
   }),
 });
 
@@ -43,4 +57,5 @@ module.exports = {
   updateEmployeeSchema,
   employeeIdParamSchema,
   listEmployeesQuerySchema,
+  employeeTasksQuerySchema,
 };

@@ -379,7 +379,7 @@ Creates a new workshop employee or owner.
 ---
 
 ### 3.2 List All Employees
-Retrieves all employees, with optional filtering.
+Retrieves all employees, with optional filtering and pagination.
 
 - **Method**: `GET`
 - **URL**: `/api/v1/employees`
@@ -387,25 +387,39 @@ Retrieves all employees, with optional filtering.
 - **Query Parameters**:
   - `isActive` (optional, boolean): `true` or `false`
   - `role` (optional): `OWNER` or `EMPLOYEE`
+  - `search` (optional): search by name or phone
+  - `page` (optional, default: `1`): page number
+  - `limit` (optional, default: `20`, max: `100`): items per page
 
 #### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "Employees retrieved successfully",
-  "data": [
-    {
-      "id": "cm7a1b2c3d4e5f6g7h8i9j0k",
-      "name": "Imran Shaikh",
-      "phone": "9825272547",
-      "role": "OWNER",
-      "isActive": true,
-      "createdAt": "2026-09-21T10:00:00.000Z",
-      "updatedAt": "2026-09-21T10:00:00.000Z"
+  "data": {
+    "employees": [
+      {
+        "id": "cm7a1b2c3d4e5f6g7h8i9j0k",
+        "name": "Imran Shaikh",
+        "phone": "9825272547",
+        "role": "OWNER",
+        "isActive": true,
+        "createdAt": "2026-09-21T10:00:00.000Z",
+        "updatedAt": "2026-09-21T10:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
-  ]
+  }
 }
 ```
+
 
 ---
 
@@ -516,44 +530,57 @@ Updates employee information, role, or active status.
 ---
 
 ### 3.6 Get Employee Tasks
-Retrieves all tasks assigned to a specific employee.
+Retrieves tasks assigned to a specific employee with pagination and status filtering.
 
 - **Method**: `GET`
 - **URL**: `/api/v1/employees/:id/tasks`
 - **Headers**: `X-Employee-Id: <actor_id>`
 - **Query Parameters**:
   - `status` (optional): `PENDING`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+  - `page` (optional, default: `1`): page number
+  - `limit` (optional, default: `20`, max: `100`): items per page
 
 #### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "Employee tasks retrieved successfully",
-  "data": [
-    {
-      "id": "task_123",
-      "jobId": "job_123",
-      "title": "Stator Coil Replacement",
-      "description": "Rewind 15 HP coil",
-      "status": "IN_PROGRESS",
-      "startedAt": "2026-09-21T10:15:00.000Z",
-      "completedAt": null,
-      "job": {
-        "id": "job_123",
-        "jobNumber": "JOB-20260921-A1B2C3",
+  "data": {
+    "tasks": [
+      {
+        "id": "task_123",
+        "jobId": "job_123",
+        "title": "Stator Coil Replacement",
+        "description": "Rewind 15 HP coil",
         "status": "IN_PROGRESS",
-        "motor": {
-          "id": "motor_123",
-          "motorNumber": "MTR-20260921-X1Y2Z3",
-          "customerName": "Patel Industries",
-          "customerPhone": "9825000000",
-          "brand": "Kirloskar"
+        "startedAt": "2026-09-21T10:15:00.000Z",
+        "completedAt": null,
+        "job": {
+          "id": "job_123",
+          "jobNumber": "JOB-20260921-A1B2C3",
+          "status": "IN_PROGRESS",
+          "motor": {
+            "id": "motor_123",
+            "motorNumber": "MTR-20260921-X1Y2Z3",
+            "customerName": "Patel Industries",
+            "customerPhone": "9825000000",
+            "brand": "Kirloskar"
+          }
         }
       }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
-  ]
+  }
 }
 ```
+
 
 ---
 
@@ -664,7 +691,9 @@ Lists motors with pagination, text search (motorNumber, customerName, customerPh
       "total": 1,
       "page": 1,
       "limit": 20,
-      "totalPages": 1
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
   }
 }
@@ -909,7 +938,9 @@ Lists workshop jobs with filters and pagination.
       "total": 1,
       "page": 1,
       "limit": 20,
-      "totalPages": 1
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
   }
 }
@@ -1100,31 +1131,46 @@ Creates an unassigned or assigned task. Any employee can create an unassigned ta
 ---
 
 ### 6.2 List Tasks for a Job
-Lists all tasks associated with a job.
+Lists all tasks associated with a job with pagination and status filtering.
 
 - **Method**: `GET`
 - **URL**: `/api/v1/jobs/:jobId/tasks`
 - **Headers**: `X-Employee-Id: <actor_id>`
+- **Query Parameters**:
+  - `status` (optional): `PENDING`, `ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`
+  - `page` (optional, default: `1`): page number
+  - `limit` (optional, default: `20`, max: `100`): items per page
 
 #### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "Tasks retrieved successfully",
-  "data": [
-    {
-      "id": "task_456",
-      "title": "Bearing Replacement",
-      "status": "ASSIGNED",
-      "assignedEmployee": {
-        "id": "emp_worker_123",
-        "name": "Zubair Shaikh",
-        "role": "EMPLOYEE"
+  "data": {
+    "tasks": [
+      {
+        "id": "task_456",
+        "title": "Bearing Replacement",
+        "status": "ASSIGNED",
+        "assignedEmployee": {
+          "id": "emp_worker_123",
+          "name": "Zubair Shaikh",
+          "role": "EMPLOYEE"
+        }
       }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
-  ]
+  }
 }
 ```
+
 
 ---
 
@@ -1240,68 +1286,99 @@ Employees advance task status during their work.
 ## 7. History Module (`/api/v1/history`)
 
 ### 7.1 Motor History Timeline
+Retrieves chronological history logs for a specific motor with pagination.
+
 - **Method**: `GET`
-- **URL**: `/api/v1/history/motors/:motorId`
+- **URL**: `/api/v1/history/motors/:motorId` (or `/api/v1/motors/:motorId/history`)
 - **Headers**: `X-Employee-Id: <actor_id>`
+- **Query Parameters**:
+  - `page` (optional, default: `1`): page number
+  - `limit` (optional, default: `20`, max: `100`): items per page
 
 #### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "Motor history retrieved successfully",
-  "data": [
-    {
-      "id": "hist_1",
-      "motorId": "motor_123",
-      "action": "MOTOR_REGISTERED",
-      "description": "Motor MTR-20260921-A8F1C0 registered for customer Patel Industries",
-      "metadata": {
-        "motorNumber": "MTR-20260921-A8F1C0",
-        "customerName": "Patel Industries"
-      },
-      "createdAt": "2026-09-21T10:00:00.000Z",
-      "actorEmployee": {
-        "id": "emp_123",
-        "name": "Imran Shaikh",
-        "role": "OWNER"
+  "data": {
+    "history": [
+      {
+        "id": "hist_1",
+        "motorId": "motor_123",
+        "action": "MOTOR_REGISTERED",
+        "description": "Motor MTR-20260921-A8F1C0 registered for customer Patel Industries",
+        "metadata": {
+          "motorNumber": "MTR-20260921-A8F1C0",
+          "customerName": "Patel Industries"
+        },
+        "createdAt": "2026-09-21T10:00:00.000Z",
+        "actorEmployee": {
+          "id": "emp_123",
+          "name": "Imran Shaikh",
+          "role": "OWNER"
+        }
       }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
-  ]
+  }
 }
 ```
 
 ---
 
 ### 7.2 Job History Timeline
+Retrieves chronological history logs for a specific job with pagination.
+
 - **Method**: `GET`
-- **URL**: `/api/v1/history/jobs/:jobId`
+- **URL**: `/api/v1/history/jobs/:jobId` (or `/api/v1/jobs/:jobId/history`)
 - **Headers**: `X-Employee-Id: <actor_id>`
+- **Query Parameters**:
+  - `page` (optional, default: `1`): page number
+  - `limit` (optional, default: `20`, max: `100`): items per page
 
 #### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "Job history retrieved successfully",
-  "data": [
-    {
-      "id": "hist_2",
-      "jobId": "job_123",
-      "action": "JOB_STATUS_CHANGED",
-      "description": "Job JOB-20260921-B9D2E4 status changed from RECEIVED to IN_PROGRESS",
-      "metadata": {
-        "oldStatus": "RECEIVED",
-        "newStatus": "IN_PROGRESS"
-      },
-      "createdAt": "2026-09-21T10:45:00.000Z",
-      "actorEmployee": {
-        "id": "emp_123",
-        "name": "Imran Shaikh",
-        "role": "OWNER"
+  "data": {
+    "history": [
+      {
+        "id": "hist_2",
+        "jobId": "job_123",
+        "action": "JOB_STATUS_CHANGED",
+        "description": "Job JOB-20260921-B9D2E4 status changed from RECEIVED to IN_PROGRESS",
+        "metadata": {
+          "oldStatus": "RECEIVED",
+          "newStatus": "IN_PROGRESS"
+        },
+        "createdAt": "2026-09-21T10:45:00.000Z",
+        "actorEmployee": {
+          "id": "emp_123",
+          "name": "Imran Shaikh",
+          "role": "OWNER"
+        }
       }
+    ],
+    "pagination": {
+      "total": 1,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
     }
-  ]
+  }
 }
 ```
+
 
 ---
 

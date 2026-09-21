@@ -28,8 +28,13 @@ const getStatusDashboard = asyncHandler(async (req, res) => {
 });
 
 const getEmployeeTasks = asyncHandler(async (req, res) => {
-  const tasks = await employeeService.getEmployeeTasks(req.params.id, req.query.status);
+  const tasks = await employeeService.getEmployeeTasks(req.params.id, req.query);
   return sendSuccess(res, 'Employee tasks retrieved successfully', tasks);
+});
+
+const deleteEmployee = asyncHandler(async (req, res) => {
+  const employee = await employeeService.deleteEmployee(req.params.id, req.actor);
+  return sendSuccess(res, 'Employee deleted successfully', employee);
 });
 
 module.exports = {
@@ -39,4 +44,5 @@ module.exports = {
   updateEmployee,
   getStatusDashboard,
   getEmployeeTasks,
+  deleteEmployee,
 };

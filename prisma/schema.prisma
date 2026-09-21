@@ -30,19 +30,21 @@ enum TaskStatus {
 }
 
 model Employee {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  phone     String   @unique
-  role      Role     @default(EMPLOYEE)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone     String    @unique
+  role      Role      @default(EMPLOYEE)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   assignedTasks  Task[]    @relation("AssignedEmployee")
   historyActions History[] @relation("ActorEmployee")
 
   @@index([isActive])
   @@index([role])
+  @@index([deletedAt])
 }
 
 model Motor {
@@ -63,6 +65,7 @@ model Motor {
   expectedDeliveryAt DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
+  deletedAt          DateTime?
 
   images    MotorImage[]
   jobs      Job[]
@@ -71,23 +74,26 @@ model Motor {
   @@index([customerPhone])
   @@index([customerName])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model MotorImage {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   motorId      String
   publicId     String
   secureUrl    String
-  resourceType String   @default("image")
+  resourceType String    @default("image")
   width        Int?
   height       Int?
   bytes        Int?
   format       String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
 
   motor Motor @relation(fields: [motorId], references: [id], onDelete: Cascade)
 
   @@index([motorId])
+  @@index([deletedAt])
 }
 
 model Job {
@@ -98,6 +104,7 @@ model Job {
   notes     String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   motor     Motor     @relation(fields: [motorId], references: [id], onDelete: Cascade)
   tasks     Task[]
@@ -106,6 +113,7 @@ model Job {
   @@index([motorId])
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model Task {
@@ -119,6 +127,7 @@ model Task {
   completedAt        DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
+  deletedAt          DateTime?
 
   job              Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   assignedEmployee Employee? @relation("AssignedEmployee", fields: [assignedEmployeeId], references: [id], onDelete: SetNull)
@@ -127,6 +136,7 @@ model Task {
   @@index([jobId])
   @@index([assignedEmployeeId])
   @@index([status])
+  @@index([deletedAt])
 }
 
 model History {
@@ -139,6 +149,7 @@ model History {
   description     String?
   metadata        Json?
   createdAt       DateTime @default(now())
+  deletedAt       DateTime?
 
   motor         Motor?    @relation(fields: [motorId], references: [id], onDelete: Cascade)
   job           Job?      @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -150,6 +161,7 @@ model History {
   @@index([taskId])
   @@index([actorEmployeeId])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model AdminSession {
@@ -165,8 +177,10 @@ model AdminSession {
   userAgent         String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
 
   @@index([tokenHash])
   @@index([adminEmail])
   @@index([family])
+  @@index([deletedAt])
 }

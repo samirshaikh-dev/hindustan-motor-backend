@@ -1,4 +1,7 @@
 const defaultPrisma = require('../../config/prisma');
+const { NotFoundError } = require('../../core/errors');
+const { softDelete } = require('../../core/softDelete');
+const { getPaginationParams, createPagination } = require('../../utils/pagination');
 
 class JobRepository {
   async create(data) {
@@ -16,12 +19,16 @@ class JobRepository {
       include: {
         motor: {
           include: {
-            images: true,
+            images: {
+              where: { deletedAt: null },
+            },
           },
         },
         tasks: {
+          where: { deletedAt: null },
           include: {
             assignedEmployee: {
+              where: { deletedAt: null },
               select: { id: true, name: true, phone: true, role: true },
             },
           },
@@ -32,7 +39,7 @@ class JobRepository {
   }
 
   async findAll({ status, motorId, page = 1, limit = 20 }) {
-    const skip = (page - 1) * limit;
+    const { skip, take, page: currentPage, limit: currentLimit } = getPaginationParams(page, limit);
     const where = {};
 
     if (status) {
@@ -47,7 +54,7 @@ class JobRepository {
       defaultPrisma.job.findMany({
         where,
         skip,
-        take: limit,
+        take,
         orderBy: { createdAt: 'desc' },
         include: {
           motor: {
@@ -60,7 +67,11 @@ class JobRepository {
             },
           },
           _count: {
-            select: { tasks: true },
+            select: {
+              tasks: {
+                where: { deletedAt: null },
+              },
+            },
           },
         },
       }),
@@ -69,12 +80,7 @@ class JobRepository {
 
     return {
       jobs,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      pagination: createPagination(total, currentPage, currentLimit),
     };
   }
 
@@ -123,6 +129,43 @@ class JobRepository {
       });
 
       return updatedJob;
+    });
+  }
+
+  async deleteJobWithCascade({ jobId, actorEmployeeId }) {
+    const now = new Date();
+
+    return defaultPrisma.$transaction(async (tx) => {
+      const job = await tx.job.findUnique({
+        where: { id: jobId },
+      });
+
+      if (!job) {
+        throw new NotFoundError('Job not found', 'JOB_NOT_FOUND');
+      }
+
+      await tx.task.updateMany({
+        where: { jobId },
+        data: { deletedAt: now },
+      });
+
+      await softDelete('job', job.id, tx);
+
+      await tx.history.create({
+        data: {
+          motorId: job.motorId,
+          jobId: job.id,
+          actorEmployeeId,
+          action: 'JOB_DELETED',
+          description: `Job ${job.jobNumber} deleted for motor ${job.motorId}`,
+          metadata: {
+            jobNumber: job.jobNumber,
+            motorId: job.motorId,
+          },
+        },
+      });
+
+      return job;
     });
   }
 }

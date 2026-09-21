@@ -48,9 +48,16 @@ class EmployeeService {
     }));
   }
 
-  async getEmployeeTasks(employeeId, statusFilter) {
+  async getEmployeeTasks(employeeId, query = {}) {
     await this.getEmployeeById(employeeId);
-    return employeeRepo.findEmployeeTasks(employeeId, statusFilter);
+    return employeeRepo.findEmployeeTasks(employeeId, query);
+  }
+
+  async deleteEmployee(id, actorEmployee) {
+    return employeeRepo.deleteEmployee({
+      employeeId: id,
+      actorEmployeeId: actorEmployee.id,
+    });
   }
 }
 

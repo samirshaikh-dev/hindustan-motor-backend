@@ -18,5 +18,6 @@ router.get('/', validate(jobIdTasksParamSchema), taskController.getTasksByJobId)
 router.get('/:id', validate(taskIdParamSchema), taskController.getTaskById);
 router.patch('/:id', validate(updateTaskSchema), taskController.updateTask);
 router.patch('/:id/status', validate(updateTaskStatusSchema), taskController.updateTaskStatus);
+router.delete('/:id', validate(taskIdParamSchema), taskController.deleteTask);
 
 module.exports = router;

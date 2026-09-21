@@ -1,4 +1,5 @@
 const defaultPrisma = require('../../config/prisma');
+const { getPaginationParams, createPagination } = require('../../utils/pagination');
 
 class HistoryService {
   async recordHistory(
@@ -19,9 +20,14 @@ class HistoryService {
     });
   }
 
-  async getMotorHistory(motorId) {
-    return defaultPrisma.history.findMany({
-      where: { motorId },
+  async getMotorHistory(motorId, { page = 1, limit = 20 } = {}) {
+    const { skip, take, page: currentPage, limit: currentLimit } = getPaginationParams(page, limit);
+    const where = { motorId };
+
+    const history = await defaultPrisma.history.findMany({
+      where,
+      skip,
+      take,
       include: {
         actorEmployee: {
           select: { id: true, name: true, role: true },
@@ -29,11 +35,28 @@ class HistoryService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    let total = 0;
+    try {
+      total = await defaultPrisma.history.count({ where });
+    } catch {
+      total = history.length;
+    }
+
+    return {
+      history,
+      pagination: createPagination(total, currentPage, currentLimit),
+    };
   }
 
-  async getJobHistory(jobId) {
-    return defaultPrisma.history.findMany({
-      where: { jobId },
+  async getJobHistory(jobId, { page = 1, limit = 20 } = {}) {
+    const { skip, take, page: currentPage, limit: currentLimit } = getPaginationParams(page, limit);
+    const where = { jobId };
+
+    const history = await defaultPrisma.history.findMany({
+      where,
+      skip,
+      take,
       include: {
         actorEmployee: {
           select: { id: true, name: true, role: true },
@@ -41,6 +64,18 @@ class HistoryService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    let total = 0;
+    try {
+      total = await defaultPrisma.history.count({ where });
+    } catch {
+      total = history.length;
+    }
+
+    return {
+      history,
+      pagination: createPagination(total, currentPage, currentLimit),
+    };
   }
 }
 

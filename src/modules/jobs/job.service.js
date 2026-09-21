@@ -90,6 +90,13 @@ class JobService {
 
     return jobRepo.updateStatusWithHistory(id, newStatus, actorEmployee.id, notes);
   }
+
+  async deleteJob(id, actorEmployee) {
+    return jobRepo.deleteJobWithCascade({
+      jobId: id,
+      actorEmployeeId: actorEmployee.id,
+    });
+  }
 }
 
 module.exports = new JobService();
