@@ -78,6 +78,9 @@ class EmployeeRepository {
           where: {
             status: { in: ['ASSIGNED', 'IN_PROGRESS'] },
             deletedAt: null,
+            job: {
+              deletedAt: null,
+            },
           },
           select: {
             id: true,
@@ -85,7 +88,6 @@ class EmployeeRepository {
             status: true,
             startedAt: true,
             job: {
-              where: { deletedAt: null },
               select: {
                 id: true,
                 jobNumber: true,

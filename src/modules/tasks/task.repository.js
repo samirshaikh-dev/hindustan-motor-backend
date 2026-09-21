@@ -9,7 +9,6 @@ class TaskRepository {
       data,
       include: {
         assignedEmployee: {
-          where: { deletedAt: null },
           select: { id: true, name: true, phone: true, role: true },
         },
         job: {
@@ -26,7 +25,6 @@ class TaskRepository {
       where: { id },
       include: {
         assignedEmployee: {
-          where: { deletedAt: null },
           select: { id: true, name: true, phone: true, role: true },
         },
         job: {
@@ -54,7 +52,6 @@ class TaskRepository {
       take,
       include: {
         assignedEmployee: {
-          where: { deletedAt: null },
           select: { id: true, name: true, phone: true, role: true },
         },
       },
@@ -80,7 +77,6 @@ class TaskRepository {
       data,
       include: {
         assignedEmployee: {
-          where: { deletedAt: null },
           select: { id: true, name: true, phone: true, role: true },
         },
         job: {

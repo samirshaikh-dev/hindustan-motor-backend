@@ -75,7 +75,6 @@ class MotorRepository {
               where: { deletedAt: null },
               include: {
                 assignedEmployee: {
-                  where: { deletedAt: null },
                   select: { id: true, name: true, phone: true },
                 },
               },
