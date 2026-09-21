@@ -49,37 +49,26 @@ These can be added later without changing the core architecture significantly.
 
 ---
 
-## 3. Users and Roles
+## 3. Roles (Labels Only)
 
-### Owner/Admin
+There is **no login/authentication** in this app. The acting employee is identified on every request via an `X-Employee-Id` header, which the backend validates (employee exists and is active). The only permission enforced is that **only the admin (role `OWNER`) can assign tasks to employees**; every other operation is open to all actors.
 
-Can:
+### Admin
 
-- Login
-- View dashboard information
-- Create motors
-- View all motors/jobs
-- Create and update jobs
-- Create tasks
-- Assign tasks to employees
-- View employees
-- View complete motor/job history
-- Update job/task status
-- Upload/view motor images
+- Views a dashboard showing every employee and their current status
+- Creates/updates employee records
+- Registers motors and creates jobs
+- Creates tasks and **assigns them to employees** (admin-only)
+- Updates job/task status
+- Uploads/view motor images
 
 ### Employee
 
-Can:
-
-- Login
-- View assigned tasks
-- View related motor/job information
-- Start assigned tasks
-- Update task status
-- Complete assigned tasks
-- View relevant task history
-
-Employees should not be able to access administrative operations unless explicitly authorized.
+- Registers new motors (auto-creates the related job)
+- Creates tasks (assignment must be done by the admin)
+- Updates job/task status
+- Uploads/view motor images
+- Views assigned tasks and related motor/job information
 
 ---
 
@@ -166,7 +155,7 @@ Suggested fields:
 - createdAt
 - updatedAt
 
-Authentication-related fields should be separated appropriately if employees use login credentials.
+Authentication/credential fields are not needed — employees are identified by name/phone, and the acting employee is supplied per request via a header.
 
 ### History
 
@@ -230,7 +219,7 @@ The backend should validate status transitions rather than allowing arbitrary va
 
 ### Motor Registration
 
-1. Owner creates a motor.
+1. An employee registers a motor.
 2. Backend validates the request.
 3. Backend generates a unique motor number.
 4. Backend creates the motor.
@@ -239,12 +228,11 @@ The backend should validate status transitions rather than allowing arbitrary va
 
 ### Task Assignment
 
-1. Owner opens a job.
-2. Owner creates a task.
-3. Owner selects an employee.
-4. Backend validates that the employee is active.
-5. Task is created/assigned.
-6. History event is recorded.
+1. An employee opens a job and creates a task (unassigned).
+2. The admin assigns the task to an employee.
+3. Backend validates that the actor is the admin and that the employee is active.
+4. Task is assigned.
+5. History event is recorded.
 
 ### Employee Work
 
@@ -259,7 +247,7 @@ The backend should validate status transitions rather than allowing arbitrary va
 
 ### Job Progress
 
-Job status can be updated by authorized users according to the defined workflow.
+Job status can be updated by any employee according to the defined workflow.
 
 Every important status change must create a history record.
 
@@ -269,11 +257,7 @@ Every important status change must create a history record.
 
 The backend will expose REST APIs under `/api/v1`.
 
-### Authentication
-
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
+No login endpoints exist. Every request carries an `X-Employee-Id` header identifying the acting employee (validated against active employees by middleware).
 
 ### Motors
 
@@ -324,6 +308,7 @@ The backend must validate:
 - Phone number format
 - Valid IDs
 - Active employee assignment
+- Admin-only task assignment (actor role `OWNER`)
 - Valid enum/status values
 - Status transitions
 - Duplicate motor/job numbers
@@ -352,15 +337,14 @@ The backend should control upload authorization and should not store image binar
 
 ## 10. Security Requirements
 
-- Authentication required for protected APIs.
-- Role-based authorization for owner/admin and employee operations.
-- Passwords must never be stored as plain text.
+- The actor `X-Employee-Id` header is validated against active employees on every request.
+- Only the admin (role `OWNER`) can assign tasks to employees; enforced server-side.
 - Secrets must be stored in environment variables.
 - Request validation must happen on the server.
 - Consistent error responses must be returned.
 - Sensitive fields must not be exposed unnecessarily.
 - CORS must be configured for the mobile client/environment.
-- Rate limiting should be considered for authentication endpoints.
+- Rate limiting may be applied to the API.
 
 ---
 
@@ -406,8 +390,6 @@ Each business domain owns its:
 
 Example modules:
 
-- Auth
-- Users
 - Employees
 - Motors
 - Jobs
@@ -453,15 +435,15 @@ Suggested:
 
 The MVP is considered functional when:
 
-- An owner can log in.
-- An employee can log in.
+- The acting employee is identified via an `X-Employee-Id` header; missing/inactive IDs are rejected.
+- The admin can view every employee and their current status.
 - A new motor can be registered.
 - A job can be created for a motor.
 - Tasks can be created for a job.
-- Tasks can be assigned to employees.
+- Tasks can be assigned to employees (admin/OWNER only).
 - Employees can see their assigned tasks.
 - Employees can start and complete tasks.
-- Job status can be updated by authorized users.
+- Job status can be updated by any employee.
 - Motor/job history is automatically recorded.
 - Motor images can be uploaded to Cloudinary.
 - Data persists correctly in Neon PostgreSQL.

@@ -12,9 +12,7 @@ prisma
 # Validation
 zod
 
-# Authentication & security
-jsonwebtoken
-argon2
+# Security
 helmet
 cors
 express-rate-limit

@@ -33,8 +33,6 @@ Initial modules:
 ```text
 src/
 ├── modules/
-│   ├── auth/
-│   ├── users/
 │   ├── employees/
 │   ├── motors/
 │   ├── jobs/
@@ -67,13 +65,11 @@ Managed PostgreSQL database.
 
 Used for:
 
-- Users
 - Employees
 - Motors
 - Jobs
 - Tasks
 - History
-- Authentication-related data
 - Other relational application data
 
 PostgreSQL is appropriate because the application has clear relationships between motors, jobs, tasks, employees, and history.
@@ -105,25 +101,24 @@ Motor
 
 ---
 
-## 5. Authentication
+## 5. Identity & Actor Tracking
 
-### JWT
-
-Use access-token based authentication for the mobile application.
+No login or authentication. The acting employee is identified per request.
 
 Recommended approach:
 
-- Short-lived access token
-- Secure refresh-token strategy
-- Password hashing with Argon2 or bcrypt
-- Role-based authorization
+- Each request sends an `X-Employee-Id` header.
+- Middleware validates that the employee exists and is active.
+- The actor is attached to the request and stored on history records.
 
-Roles:
+Identifiers:
 
 ```text
 OWNER
 EMPLOYEE
 ```
+
+Permission model: only the admin (`OWNER`) can assign tasks to employees. All other operations are open to every actor; this single rule is enforced server-side.
 
 ---
 
@@ -193,16 +188,14 @@ Recommended packages/tools:
 - Helmet
 - CORS
 - Rate limiting
-- Argon2 or bcrypt
 - Zod
-- JWT
 
 Security principles:
 
-- Never store plaintext passwords.
 - Never commit secrets.
 - Validate every external input.
-- Authorize every protected resource.
+- Validate the actor employee on every request.
+- Enforce the admin-only task-assignment rule on the server.
 - Do not trust role/status values from the client.
 
 ---
@@ -216,10 +209,10 @@ Log:
 - Request information
 - Errors
 - Important application events
-- Authentication failures
+- Actor validation failures
 - Unexpected exceptions
 
-Do not log passwords, tokens, or other secrets.
+Do not log secrets or sensitive identity data.
 
 ---
 
@@ -246,8 +239,7 @@ Recommended:
 
 Priority test areas:
 
-- Authentication
-- Authorization
+- Actor identity validation (actor header middleware)
 - Motor creation
 - Job creation
 - Task assignment
@@ -267,8 +259,7 @@ PORT=5000
 
 DATABASE_URL=
 
-JWT_ACCESS_SECRET=
-JWT_REFRESH_SECRET=
+ACTOR_HEADER=X-Employee-Id
 
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
@@ -320,7 +311,6 @@ Backend
     ├── Express.js
     ├── Prisma
     ├── Zod
-    ├── JWT
     ├── Winston
     └── Helmet/CORS/Rate Limit
 
